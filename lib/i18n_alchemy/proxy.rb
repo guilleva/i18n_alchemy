@@ -1,8 +1,13 @@
 module I18n
   module Alchemy
     # Depend on AS::Basic/ProxyObject which has a "blank slate" - no methods.
-    base_proxy = defined?(ActiveSupport::ProxyObject) ?
-      ActiveSupport::ProxyObject : ActiveSupport::BasicObject
+    base_proxy = if defined?(ActiveSupport::ProxyObject)
+                   ActiveSupport::ProxyObject
+                 elsif defined?(ActiveSupport::Deprecation::DeprecationProxy)
+                   ActiveSupport::Deprecation::DeprecationProxy
+                 else
+                   ActiveSupport::BasicObject
+                 end
 
     class Proxy < base_proxy
       include AttributesParsing
@@ -61,7 +66,7 @@ module I18n
         def method_missing(*args, **kwargs, &block)
           @target.send(*args, **kwargs, &block)
         end
-        ruby2_keywords :method_missing
+        ruby2_keywords :method_missing if RUBY_VERSION < "3.0"
       else
         def method_missing(*args, &block)
           @target.send(*args, &block)
